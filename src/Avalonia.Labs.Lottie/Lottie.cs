@@ -47,6 +47,30 @@ public class Lottie : Control
             nameof(StretchDirection),
             StretchDirection.Both);
 
+    /// <summary>Lottie
+    /// Defines the <see cref="FrameCount"/> property.
+    /// </summary>
+    public static readonly StyledProperty<double> FrameCountProperty =
+        AvaloniaProperty.Register<Lottie, double>(nameof(FrameCount), 0);
+
+    /// <summary>Lottie
+    /// Defines the <see cref="Loop"/> property.
+    /// </summary>
+    public static readonly StyledProperty<AnimationLoop> LoopProperty =
+        AvaloniaProperty.Register<Lottie, AnimationLoop>(nameof(Loop), AnimationLoop.StartBegin);
+
+    /// <summary>Lottie
+    /// Defines the <see cref="StartLoop"/> property.
+    /// </summary>
+    public static readonly StyledProperty<double> StartLoopProperty =
+        AvaloniaProperty.Register<Lottie, double>(nameof(StartLoop), -1);
+
+    /// <summary>Lottie
+    /// Defines the <see cref="EndLoop"/> property.
+    /// </summary>
+    public static readonly StyledProperty<double> EndLoopProperty =
+        AvaloniaProperty.Register<Lottie, double>(nameof(EndLoop), -1);
+
     /// <summary>
     /// Defines the <see cref="RepeatCount"/> property.
     /// </summary>
@@ -79,6 +103,42 @@ public class Lottie : Control
     {
         get { return GetValue(StretchDirectionProperty); }
         set { SetValue(StretchDirectionProperty, value); }
+    }
+
+    /// <summary>
+    /// Gets the framecount of the current lottie animation.
+    /// </summary>
+    public double FrameCount
+    {
+        get { return GetValue(FrameCountProperty); }
+        set { SetValue(FrameCountProperty, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the type of loop behaviour.
+    /// </summary>
+    public AnimationLoop Loop
+    {
+        get { return GetValue(LoopProperty); }
+        set { SetValue(LoopProperty, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the start frame of the loop.
+    /// </summary>
+    public double StartLoop
+    {
+        get { return GetValue(StartLoopProperty); }
+        set { SetValue(StartLoopProperty, value); }
+    }
+
+    /// <summary>
+    /// Gets of sets the end frame of the loop.
+    /// </summary>
+    public double EndLoop
+    {
+        get { return GetValue(EndLoopProperty); }
+        set { SetValue(EndLoopProperty, value); }
     }
 
     /// <summary>
@@ -227,6 +287,45 @@ public class Lottie : Control
                 Start();
                 break;
             }
+            case nameof(StartLoop):
+            {
+                if (_customVisual != null)
+                {
+                    _customVisual.SendHandlerMessage(
+                        new LottiePayload(
+                            LottieCommand.Update,
+                            _animation,
+                            Stretch,
+                            StretchDirection, Loop, StartLoop, EndLoop));
+                }
+                break;
+            }
+            case nameof(EndLoop):
+                {
+                    if (_customVisual != null)
+                    {
+                        _customVisual.SendHandlerMessage(
+                            new LottiePayload(
+                                LottieCommand.Update,
+                                _animation,
+                                Stretch,
+                                StretchDirection, Loop, StartLoop, EndLoop));
+                    }
+                    break;
+                }
+            case nameof(Loop):
+                {
+                    if (_customVisual != null)
+                    {
+                        _customVisual.SendHandlerMessage(
+                            new LottiePayload(
+                                LottieCommand.Update,
+                                _animation,
+                                Stretch,
+                                StretchDirection, Loop, StartLoop, EndLoop));
+                    }
+                    break;
+                }
         }
     }
 
@@ -310,12 +409,18 @@ public class Lottie : Control
 
     private void Start()
     {
+        if (_animation is not null)
+            FrameCount = _animation.OutPoint;
+
         _customVisual?.SendHandlerMessage(
             new LottiePayload(
                 LottieCommand.Start,
                 _animation,
                 Stretch, 
-                StretchDirection, 
+                StretchDirection,
+                Loop,
+                StartLoop,
+                EndLoop,
                 _repeatCount));
     }
 

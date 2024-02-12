@@ -1,3 +1,4 @@
+
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -96,6 +97,13 @@
                   IsChecked="{Binding EnableCheckerboard}"
                   HorizontalAlignment="Center"
                   Content="Checkerboard" />
+        <TextBlock Text="Frame count: " VerticalAlignment="Center"  Margin="10,10,0,0">
+          <Run Text="{Binding ElementName=Lottie, Path=FrameCount}">
+          </Run>
+        </TextBlock>
+        <ComboBox Margin="10,10,0,0" SelectedValue="{Binding ElementName=Lottie, Path=Loop}" />
+        <NumericUpDown Margin="10,10,0,0" Value="{Binding ElementName=Lottie, Path=StartLoop}"/>
+        <NumericUpDown Margin="10,10,0,0" Value="{Binding ElementName=Lottie, Path=EndLoop}"/>
       </WrapPanel>
       <Viewbox Stretch="Uniform">
         <lottie:Lottie Name="Lottie"

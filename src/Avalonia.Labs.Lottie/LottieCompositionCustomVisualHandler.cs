@@ -20,13 +20,16 @@ internal class LottieCompositionCustomVisualHandler : CompositionCustomVisualHan
     private int _repeatCount;
     private int _count;
 
+    private AnimationLoop _segmentedLoop = AnimationLoop.None;
+    private TimeSpan _startLoopTime;
+    private TimeSpan _endLoopTime;
+
     public override void OnMessage(object message)
     {
         if (message is not LottiePayload msg)
         {
             return;
         }
-
         switch (msg)
         {
             case
@@ -35,50 +38,74 @@ internal class LottieCompositionCustomVisualHandler : CompositionCustomVisualHan
                 Animation: { } an,
                 Stretch: { } st,
                 StretchDirection: { } sd,
-                RepeatCount: { } rp
+                RepeatCount: { } rp,
+                LottieLoop: { } lp,
+                StartLoop: { } sl,
+                EndLoop: { } el
             }:
-            {
-                _running = true;
-                _lastServerTime = null;
-                _stretch = st;
-                _stretchDirection = sd;
-                _animation = an;
-                _repeatCount = rp;
-                _count = 0;
-                _animationElapsed = TimeSpan.Zero;
-                RegisterForNextAnimationFrameUpdate();
-                break;
-            }
+                {
+                    _running = true;
+                    _lastServerTime = null;
+                    _stretch = st;
+                    _stretchDirection = sd;
+                    _animation = an;
+                    _repeatCount = rp;
+                    _count = 0;
+                    _animationElapsed = TimeSpan.Zero;
+                    _segmentedLoop = lp;
+                    if (sl > -1)
+                    {
+                        _startLoopTime = GetTimeForFrame(sl);
+                    }
+                    if (el > -1)
+                    {
+                        _endLoopTime = GetTimeForFrame(el);
+                    }
+                    RegisterForNextAnimationFrameUpdate();
+                    break;
+                }
             case
             {
                 LottieCommand: LottieCommand.Update,
                 Stretch: { } st,
-                StretchDirection: { } sd
+                StretchDirection: { } sd,
+                LottieLoop: { } lp,
+                StartLoop: { } sl,
+                EndLoop: { } el
             }:
-            {
-                _stretch = st;
-                _stretchDirection = sd;
-                RegisterForNextAnimationFrameUpdate();
-                break;
-            }
+                {
+                    _stretch = st;
+                    _stretchDirection = sd;
+                    _segmentedLoop = lp;
+                    if (sl > -1)
+                    {
+                        _startLoopTime = GetTimeForFrame(sl);
+                    }
+                    if (el > -1)
+                    {
+                        _endLoopTime = GetTimeForFrame(el);
+                    }
+                    RegisterForNextAnimationFrameUpdate();
+                    break;
+                }
             case
             {
                 LottieCommand: LottieCommand.Stop
             }:
-            {
-                _running = false;
-                _animationElapsed = TimeSpan.Zero;
-                _count = 0;
-                break;
-            }
+                {
+                    _running = false;
+                    _animationElapsed = TimeSpan.Zero;
+                    _count = 0;
+                    break;
+                }
             case
             {
                 LottieCommand: LottieCommand.Dispose
             }:
-            {
-                DisposeImpl();
-                break;
-            }
+                {
+                    DisposeImpl();
+                    break;
+                }
         }
     }
 
@@ -117,6 +144,15 @@ internal class LottieCompositionCustomVisualHandler : CompositionCustomVisualHan
             return 0f;
         }
 
+        if (_segmentedLoop > AnimationLoop.None)
+        {
+            if (_animationElapsed >= _endLoopTime)
+            {
+                _animationElapsed = _startLoopTime;
+                _count++;
+            }
+        }
+
         var frameTime = _animationElapsed.TotalSeconds;
 
         if (_animationElapsed.TotalSeconds > _animation.Duration.TotalSeconds)
@@ -129,6 +165,15 @@ internal class LottieCompositionCustomVisualHandler : CompositionCustomVisualHan
 
         return frameTime;
     }
+
+    private TimeSpan GetTimeForFrame(double frame)
+    {
+        if (_animation is null)
+            return TimeSpan.Zero;
+
+        return TimeSpan.FromSeconds(_animation.Duration.TotalSeconds / _animation.OutPoint * frame);
+    }
+
 
     private void Draw(SKCanvas canvas)
     {
